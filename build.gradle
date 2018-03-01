@@ -15,15 +15,16 @@ plugins {
 }
 
 // Define the main class for the application
-mainClassName = 'App'
+mainClassName = 'Main'
 
 dependencies {
     compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
 
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
 
-    // Use JUnit test framework
-    testCompile 'junit:junit:4.12'
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.16.20'
 }
 
 // In this section you declare where to find the dependencies of your project
