@@ -1,15 +1,11 @@
-package org.apxeolog.chronicon;/**
- * @author APXEOLOG (Artyom Melnikov), at 01.03.2018
- */
-
+package org.apxeolog.chronicon;
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
@@ -20,14 +16,18 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
+/**
+ * @author APXEOLOG (Artyom Melnikov), at 01.03.2018
+ */
 @Slf4j
 public class StashEditor extends Application {
 
@@ -42,7 +42,7 @@ public class StashEditor extends Application {
 
         private Stash.Item.Attribute attribute;
 
-        public AttributeModel(Stash.Item.Attribute attribute) {
+        AttributeModel(Stash.Item.Attribute attribute) {
             this.attribute = attribute;
             this.name = new SimpleStringProperty(attribute.getName());
             this.value = new SimpleStringProperty(String.valueOf(attribute.getValue()));
@@ -92,11 +92,20 @@ public class StashEditor extends Application {
             primaryStage.setScene(new Scene(root, 600, 600));
             primaryStage.show();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            showError(ex);
         }
     }
 
-    public void showFileChooserDialog(ActionEvent event) {
+    private void showError(Throwable throwable) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Exception. Stash format version is probably incompatible");
+        alert.setHeaderText(throwable.getMessage());
+        alert.setContentText(Arrays.stream(ExceptionUtils.getRootCauseStackTrace(throwable))
+                .limit(10).collect(Collectors.joining("\n")));
+        alert.showAndWait();
+    }
+
+    public void showFileChooserDialog() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(getChroniconFolder().toFile());
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Stash file", "*.stash"));
@@ -106,7 +115,7 @@ public class StashEditor extends Application {
         }
     }
 
-    public void loadStash(ActionEvent event) {
+    public void loadStash() {
         if (editFilePath.getText() != null) {
             File file = new File(editFilePath.getText());
             if (file.exists()) {
@@ -120,32 +129,31 @@ public class StashEditor extends Application {
                     itemsList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
                     itemsList.getSelectionModel().selectedItemProperty()
                             .addListener((observable, oldValue, newValue) -> selectItem());
-                } catch (IOException ex) {
-
+                } catch (Exception ex) {
+                    showError(ex);
                 }
             }
         }
     }
 
-    public void selectItem() {
+    void selectItem() {
         int index = itemsList.getSelectionModel().getSelectedIndex();
         Stash.Item item = stash.getItemList().get(index);
         itemTable.setEditable(true);
-        TableColumn nameColumn = (TableColumn) itemTable.getColumns().get(0);
-        nameColumn.setCellValueFactory(new PropertyValueFactory<AttributeModel, String>("name"));
+        TableColumn<AttributeModel, String> nameColumn = (TableColumn) itemTable.getColumns().get(0);
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         nameColumn.setEditable(false);
-        TableColumn valueColumn = (TableColumn) itemTable.getColumns().get(1);
-        valueColumn.setCellValueFactory(new PropertyValueFactory<AttributeModel, String>("value"));
+        TableColumn<AttributeModel, String> valueColumn = (TableColumn) itemTable.getColumns().get(1);
+        valueColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
         valueColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         valueColumn.setEditable(true);
-        valueColumn.setOnEditCommit((EventHandler<TableColumn.CellEditEvent<AttributeModel, String>>)
-                event -> event.getRowValue().setValue(event.getNewValue()));
+        valueColumn.setOnEditCommit(event -> event.getRowValue().setValue(event.getNewValue()));
         itemTable.getItems().clear();
         itemTable.getItems().addAll(item.getAttributeList().stream()
                 .map(AttributeModel::new).collect(Collectors.toList()));
     }
 
-    public void saveStash(ActionEvent event) throws IOException {
+    public void saveStash() throws IOException {
         if (editFilePath.getText() != null && stash != null) {
             File file = new File(editFilePath.getText());
             stash.toFile(file);

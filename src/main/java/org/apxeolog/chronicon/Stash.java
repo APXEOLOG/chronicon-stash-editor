@@ -42,13 +42,13 @@ public class Stash {
         @Getter
         private final List<Attribute> attributeList;
 
-        public Item(int unknownField1, int unknownField2) {
+        Item(int unknownField1, int unknownField2) {
             this.unknownField1 = unknownField1;
             this.unknownField2 = unknownField2;
             this.attributeList = new ArrayList<>(40);
         }
 
-        public static Item from(byte[] data) throws DecoderException, IOException {
+        static Item from(byte[] data) throws DecoderException, IOException {
             ByteBuffer itemData = ByteBuffer.wrap(Hex.decodeHex(new String(data))).order(ByteOrder.LITTLE_ENDIAN);
             Item item = new Item(itemData.getInt(), itemData.getInt());
             while (itemData.hasRemaining()) {
@@ -72,7 +72,7 @@ public class Stash {
             return item;
         }
 
-        public byte[] getBytes() {
+        byte[] getBytes() {
             ByteBuffer buffer = ByteBuffer.allocate(4000).order(ByteOrder.LITTLE_ENDIAN);
             buffer.putInt(unknownField1);
             buffer.putInt(unknownField2);
@@ -116,12 +116,12 @@ public class Stash {
 
     static class FakeItem extends Item {
 
-        public FakeItem() {
+        FakeItem() {
             super(-1, -1);
         }
     }
 
-    public Stash(String version, String slotsCount) {
+    private Stash(String version, String slotsCount) {
         this.version = version;
         this.slotsCount = slotsCount;
         this.itemList = new ArrayList<>(30);
