@@ -1,9 +1,16 @@
 plugins {
     id 'java'
-    id 'application'
 }
 
-mainClassName = 'StashEditor'
+jar {
+    manifest {
+        attributes "Main-Class": "org.apxeolog.chronicon.StashEditor"
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
 
 dependencies {
     compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
